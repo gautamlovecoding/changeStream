@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
+const NgoProfile = require("../models/ngoProfile");
 const Budget = require("../models/budget");
 
 // Create a new user
@@ -16,28 +17,51 @@ router.post("/users", async (req, res) => {
 
 // Create Budget
 router.post("/budget", async (req, res) => {
-    const { name, amount, year } = req.body;
-    try {
-      const budget = new Budget({ name, amount, year });
-      await budget.save();
-      res.status(201).json(budget);
-    } catch (err) {
-      res.status(500).json({ message: "Error creating budget", error: err });
-    }
-  });
+  const { name, amount, year } = req.body;
+  try {
+    const budget = new Budget({ name, amount, year });
+    await budget.save();
+    res.status(201).json(budget);
+  } catch (err) {
+    res.status(500).json({ message: "Error creating budget", error: err });
+  }
+});
+// Create NgoProfile
+router.post("/ngo", async (req, res) => {
+  const { name, email, role } = req.body;
+  try {
+    const ngo = new NgoProfile({ name, amount, year });
+    await ngo.save();
+    res.status(201).json(ngo);
+  } catch (err) {
+    res.status(500).json({ message: "Error creating ngo", error: err });
+  }
+});
+// Update NgoProfile By Id
+router.post("/ngo/:id", async (req, res) => {
+  try {
+    const ngo = await NgoProfile.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!ngo) return res.status(404).send("User not found");
+    res.json(ngo);
+  } catch (err) {
+    res.status(500).json({ message: "Error creating ngo", error: err });
+  }
+});
 
-  // Update a Budget
+// Update a Budget
 router.put("/budget/:id", async (req, res) => {
-    try {
-      const budget = await Budget.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-      });
-      if (!budget) return res.status(404).send("User not found");
-      res.json(budget);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
-  });
+  try {
+    const budget = await Budget.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!budget) return res.status(404).send("User not found");
+    res.json(budget);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
 
 // Update a user
 router.put("/users/:id", async (req, res) => {

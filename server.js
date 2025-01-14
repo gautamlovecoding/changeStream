@@ -25,17 +25,30 @@ mongoose
   });
 
 // Watch user collection for changes
-function watchUserCollection() {
+async function watchUserCollection() {
   const dbConnection = mongoose.connection;
-  // List of collections to watch
-  const collections = ["users", "budgets"];
+  const collections = ["users", "budgets", "ngoprofiles"];
 
-  collections.forEach((collectionName) => {
+  for (const collectionName of collections) {
+    try {
+      // Enable pre-and-post image tracking if not already enabled
+      await dbConnection.db.command({
+        collMod: collectionName,
+        changeStreamPreAndPostImages: { enabled: true },
+      });
+    } catch (error) {
+      console.warn(
+        `Error enabling pre-and-post images for ${collectionName}:`,
+        error.message
+      );
+    }
+
     const collection = dbConnection.collection(collectionName);
     const changeStream = collection.watch([], {
       fullDocument: "updateLookup",
       fullDocumentBeforeChange: "required",
     });
+
     changeStream.on("change", async (change) => {
       const auditLog = new AuditLog({
         operationType: change.operationType,
@@ -47,12 +60,12 @@ function watchUserCollection() {
 
       try {
         await auditLog.save();
-        console.log("Audit log saved.");
+        console.log(`Audit log saved for operation: ${change.operationType}`);
       } catch (error) {
-        console.error("Failed to save audit log:", error);
+        console.error("Failed to save audit log:", error.message);
       }
     });
-  });
+  }
 }
 
 app.listen(PORT, () => {
